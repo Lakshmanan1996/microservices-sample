@@ -43,11 +43,12 @@ pipeline {
                 script {
                     def branch = env.BRANCH_NAME ?: "main"
                     withSonarQubeEnv("${SONAR}") {
-                        dir('web-application') { // adjust to your frontend folder if needed
-                            // Define scannerHome using Jenkins tool configuration
+                        dir('web-application') { // adjust to your frontend folder
+                        // define scannerHome using Jenkins tool
                             def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                             sh """
                             npm install
+                            npm run lint
                             ${scannerHome}/bin/sonar-scanner \
                                 -Dsonar.projectKey=${IMAGE} \
                                 -Dsonar.projectName=${IMAGE} \
@@ -60,7 +61,6 @@ pipeline {
                 }
             }
         }
-
         // -------------------------------
         stage('Quality Gate') {
             agent { label 'workernode2' }
