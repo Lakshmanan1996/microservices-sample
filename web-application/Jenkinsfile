@@ -44,7 +44,7 @@
                     withSonarQubeEnv("${SONAR}") {
                         dir('web-application') {
                             sh """
-                            ${scannerHome}/bin/sonar-scanner \
+                            
                             -Dsonar.projectKey=frontend \
                             -Dsonar.projectName=frontend \
                             -Dsonar.sources=web-applications \
