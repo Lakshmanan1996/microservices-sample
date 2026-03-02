@@ -1,5 +1,5 @@
 /* =========================================================
-    Frontend Angular Web App Jenkins Pipeline
+   Frontend Angular Web App Jenkins Pipeline
  =========================================================*/
 
 pipeline {
@@ -41,16 +41,21 @@ pipeline {
             steps {
                 unstash 'source-code'
                 script {
-                    def branch = env.BRANCH_NAME ?: "main"
+                    def branch = env.BRANCH_NAME ?: "master"
                     withSonarQubeEnv("${SONAR}") {
                         dir('web-application') {
-                            // NodeJS and SonarScanner
+                            // Use Node 18 LTS
                             def nodeHome = tool name: 'NodeJS 18', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
                             def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+
                             sh """
                             export PATH=${nodeHome}/bin:\$PATH
                             npm install
-                            npm run lint
+                            # Only run lint if target exists
+                            if npm run | grep -q 'lint'; then
+                              npm run lint
+                            fi
+
                             ${scannerHome}/bin/sonar-scanner \
                                 -Dsonar.projectKey=${IMAGE} \
                                 -Dsonar.projectName=${IMAGE} \
