@@ -44,10 +44,13 @@
                     withSonarQubeEnv("${SONAR}") {
                         dir('web-application') {
                             sh """
+                            npm install
                             
                             -Dsonar.projectKey=frontend \
                             -Dsonar.projectName=frontend \
+                            
                             -Dsonar.sources=web-applications \
+                            
                             -Dsonar.exclusions=**/node_modules/**,**/build/**
                             """
                         }
