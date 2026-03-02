@@ -50,9 +50,10 @@ pipeline {
             steps {
                 unstash 'source-code'
                 script {
+                    def branch = env.BRANCH_NAME ?: "main"
                     withSonarQubeEnv("${SONAR}") {
                         dir('service-one') {
-                            sh "mvn sonar:sonar -Dsonar.projectKey=service-one-${BRANCH_NAME}"
+                            sh "mvn sonar:sonar -Dsonar.projectKey=service-one-${branch}"
                         }
                     }
                 }
