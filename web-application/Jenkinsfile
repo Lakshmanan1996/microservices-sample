@@ -1,5 +1,5 @@
 /* =========================================================
-   Frontend Angular Web App Jenkins Pipeline
+    Frontend Web App Jenkins Pipeline (Angular)
  =========================================================*/
 
 pipeline {
@@ -35,7 +35,46 @@ pipeline {
             }
         }
 
-        
+        // -------------------------------
+        stage('SonarQube Analysis') {
+            agent { label 'workernode2' }
+            steps {
+                unstash 'source-code'
+                script {
+                    def branch = env.BRANCH_NAME ?: "main"
+                    withSonarQubeEnv("${SONAR}") {
+                        dir('web-application') { // Angular frontend folder
+                            // Node 18 for npm and ESLint
+                            def nodeHome = tool name: 'NodeJS 18', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+                            def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                            sh """
+                            export PATH=${nodeHome}/bin:\$PATH
+                            npm install
+                            if npm run | grep -q 'lint'; then
+                                npm run lint
+                            fi
+                            ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=${IMAGE} \
+                                -Dsonar.projectName=${IMAGE} \
+                                -Dsonar.projectVersion=${branch} \
+                                -Dsonar.sources=src \
+                                -Dsonar.exclusions=**/node_modules/**,**/dist/**
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        // -------------------------------
+        stage('Quality Gate') {
+            agent { label 'workernode2' }
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         // -------------------------------
         stage('Docker Build') {
@@ -65,6 +104,7 @@ pipeline {
         stage('Push Docker Image') {
             agent { label 'workernode3' }
             steps {
+                unstash 'source-code'
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
                     usernameVariable: 'DOCKER_USER',
@@ -81,7 +121,7 @@ pipeline {
     }
 
     post {
-        success { echo "✅ Angular Frontend Pipeline SUCCESS" }
-        failure { echo "❌ Angular Frontend CI Pipeline FAILED" }
+        success { echo "✅ Frontend Pipeline SUCCESS" }
+        failure { echo "❌ Frontend CI Pipeline FAILED" }
     }
 }
