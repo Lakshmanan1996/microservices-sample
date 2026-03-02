@@ -43,15 +43,17 @@ pipeline {
                 script {
                     def branch = env.BRANCH_NAME ?: "main"
                     withSonarQubeEnv("${SONAR}") {
-                        dir('web-application') { // Adjust to actual frontend folder
+                        dir('web-application') { // adjust to your frontend folder if needed
+                            // Define scannerHome using Jenkins tool configuration
+                            def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                             sh """
                             npm install
                             ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=${IMAGE} \
-                            -Dsonar.projectName=${IMAGE} \
-                            -Dsonar.projectVersion=${branch} \
-                            -Dsonar.sources=src \
-                            -Dsonar.exclusions=**/node_modules/**,**/build/**
+                                -Dsonar.projectKey=${IMAGE} \
+                                -Dsonar.projectName=${IMAGE} \
+                                -Dsonar.projectVersion=${branch} \
+                                -Dsonar.sources=src \
+                                -Dsonar.exclusions=**/node_modules/**,**/build/**
                             """
                         }
                     }
