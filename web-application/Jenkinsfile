@@ -33,17 +33,7 @@
             }
         }
 
-        /*stage('Maven Build') {
-            agent { label 'workernode2' }
-            tools { maven 'maven' }
-            steps {
-                unstash 'source-code'
-                dir('service-two') {
-                    sh 'mvn clean install -DskipTests'
-                }
-            }
-        }*/
-        
+              
 
         stage('SonarQube Analysis') {
             agent { label 'workernode2' }
@@ -53,7 +43,13 @@
                     def branch = env.BRANCH_NAME ?: "main"
                     withSonarQubeEnv("${SONAR}") {
                         dir('web-application') {
-                            sh "mvn sonar:sonar -Dsonar.projectKey=service-two-${branch}"
+                            sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=frontend \
+                            -Dsonar.projectName=frontend \
+                            -Dsonar.sources=web-applications \
+                            -Dsonar.exclusions=**/node_modules/**,**/build/**
+                            """
                         }
                     }
                 }
