@@ -45,11 +45,11 @@
                         dir('web-application') {
                             sh """
                             npm install
-                            
+                            ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=frontend \
                             -Dsonar.projectName=frontend \
                             
-                            -Dsonar.sources=web-applications \
+                            -Dsonar.sources=src \
                             
                             -Dsonar.exclusions=**/node_modules/**,**/build/**
                             """
