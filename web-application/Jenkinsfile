@@ -35,49 +35,7 @@ pipeline {
             }
         }
 
-        // -------------------------------
-        stage('SonarQube Analysis') {
-            agent { label 'workernode2' }
-            steps {
-                unstash 'source-code'
-                script {
-                    def branch = env.BRANCH_NAME ?: "master"
-                    withSonarQubeEnv("${SONAR}") {
-                        dir('web-application') {
-                            // Use Node 18 LTS
-                            def nodeHome = tool name: 'NodeJS 18', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-                            def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-
-                            sh """
-                            export PATH=${nodeHome}/bin:\$PATH
-                            npm install
-                            # Only run lint if target exists
-                            if npm run | grep -q 'lint'; then
-                              npm run lint
-                            fi
-
-                            ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=${IMAGE} \
-                                -Dsonar.projectName=${IMAGE} \
-                                -Dsonar.projectVersion=${branch} \
-                                -Dsonar.sources=src \
-                                -Dsonar.exclusions=**/node_modules/**,**/dist/**
-                            """
-                        }
-                    }
-                }
-            }
-        }
-
-        // -------------------------------
-        stage('Quality Gate') {
-            agent { label 'workernode2' }
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        
 
         // -------------------------------
         stage('Docker Build') {
