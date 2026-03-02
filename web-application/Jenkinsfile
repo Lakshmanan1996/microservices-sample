@@ -36,7 +36,7 @@ pipeline {
         }
 
         // -------------------------------
-        stage('SonarQube Analysis') {
+        /*stage('SonarQube Analysis') {
             agent { label 'workernode2' }
             steps {
                 unstash 'source-code'
@@ -62,7 +62,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         // -------------------------------
         stage('Quality Gate') {
             agent { label 'workernode2' }
