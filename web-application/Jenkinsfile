@@ -1,5 +1,5 @@
 /* =========================================================
-    Frontend Web App Jenkins Pipeline
+    Frontend Angular Web App Jenkins Pipeline
  =========================================================*/
 
 pipeline {
@@ -35,13 +35,51 @@ pipeline {
             }
         }
 
-        
+        // -------------------------------
+        stage('SonarQube Analysis') {
+            agent { label 'workernode2' }
+            steps {
+                unstash 'source-code'
+                script {
+                    def branch = env.BRANCH_NAME ?: "main"
+                    withSonarQubeEnv("${SONAR}") {
+                        dir('web-application') {
+                            // NodeJS and SonarScanner
+                            def nodeHome = tool name: 'NodeJS 18', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+                            def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                            sh """
+                            export PATH=${nodeHome}/bin:\$PATH
+                            npm install
+                            npm run lint
+                            ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=${IMAGE} \
+                                -Dsonar.projectName=${IMAGE} \
+                                -Dsonar.projectVersion=${branch} \
+                                -Dsonar.sources=src \
+                                -Dsonar.exclusions=**/node_modules/**,**/dist/**
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        // -------------------------------
+        stage('Quality Gate') {
+            agent { label 'workernode2' }
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         // -------------------------------
         stage('Docker Build') {
             agent { label 'workernode3' }
             steps {
                 unstash 'source-code'
-                dir('web-application') { // Dockerfile should be here
+                dir('web-application') {
                     sh """
                     docker build -t ${DOCKERHUB_USER}/${IMAGE}:${BUILD_NUMBER} .
                     docker tag ${DOCKERHUB_USER}/${IMAGE}:${BUILD_NUMBER} ${DOCKERHUB_USER}/${IMAGE}:latest
@@ -55,7 +93,6 @@ pipeline {
             agent { label 'workernode3' }
             steps {
                 sh """
-                # Scan for HIGH and CRITICAL vulnerabilities
                 trivy image --exit-code 1 --severity HIGH,CRITICAL ${DOCKERHUB_USER}/${IMAGE}:${BUILD_NUMBER}
                 """
             }
@@ -65,7 +102,6 @@ pipeline {
         stage('Push Docker Image') {
             agent { label 'workernode3' }
             steps {
-                unstash 'source-code'
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
                     usernameVariable: 'DOCKER_USER',
@@ -82,7 +118,7 @@ pipeline {
     }
 
     post {
-        success { echo "✅ Frontend Pipeline SUCCESS" }
-        failure { echo "❌ Frontend CI Pipeline FAILED" }
+        success { echo "✅ Angular Frontend Pipeline SUCCESS" }
+        failure { echo "❌ Angular Frontend CI Pipeline FAILED" }
     }
 }
