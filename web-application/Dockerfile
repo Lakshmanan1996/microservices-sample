@@ -14,7 +14,7 @@ RUN npm install -g @angular/cli@15
 COPY . .
 
 # Build Angular app
-RUN npm run build --prod
+RUN npm run build 
 
 # ------------------ Runtime Stage ------------------
 FROM nginx:alpine
