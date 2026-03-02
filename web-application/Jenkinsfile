@@ -45,8 +45,10 @@ pipeline {
                     withSonarQubeEnv("${SONAR}") {
                         dir('web-application') { // adjust to your frontend folder
                         // define scannerHome using Jenkins tool
+                            def nodeHome = tool name: 'NodeJS 18', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
                             def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                             sh """
+                            export PATH=${nodeHome}/bin:\$PATH
                             npm install
                             npm run lint
                             ${scannerHome}/bin/sonar-scanner \
@@ -54,7 +56,7 @@ pipeline {
                                 -Dsonar.projectName=${IMAGE} \
                                 -Dsonar.projectVersion=${branch} \
                                 -Dsonar.sources=src \
-                                -Dsonar.exclusions=**/node_modules/**,**/build/**
+                                -Dsonar.exclusions=**/node_modules/**,**/dist/**
                             """
                         }
                     }
