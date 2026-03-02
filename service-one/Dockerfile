@@ -1,15 +1,13 @@
-# Use OpenJDK 17 base image
-FROM eclipse-temurin:17-jdk-jammy
-
-# Set working directory
+# Stage 1: Build
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the JAR built by Maven into the container
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} app.jar
-
-# Expose port your service listens on
+# Stage 2: Runtime
+FROM eclipse-temurin:17-jdk-jammy
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8081
-
-# Run the JAR
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
